@@ -84,11 +84,11 @@ function godswork() {
 
   
     scene.environment = envMap;
-    // scene.background = envMap;
+    scene.background = envMap;
 
 
     controls = new OrbitControls(camera, renderer.domElement);
-    controls.enabled = false;
+    // controls.enabled = false;
 
 
     document.body.appendChild(renderer.domElement);
