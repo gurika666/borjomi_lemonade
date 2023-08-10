@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
+import { EffectComposer, EffectPass, BrightnessContrastEffect, RenderPass, SMAAEffect, ChromaticAberrationEffect } from 'postprocessing';
 import { gsap } from 'gsap';
 import { DoubleSide, EquirectangularRefractionMapping } from 'three';
 import { AnimationUtils } from 'three';
@@ -10,8 +11,8 @@ import { AnimationUtils } from 'three';
 
 const canvas = document.querySelector('.canvas');
 
-let scene, camera, renderer, controls;
-let mesh, envMap, materialEnvMap;
+let scene, camera, renderer, controls, composer;
+let mesh, envMap;
 let manager = new THREE.LoadingManager;
 let sceneloader = new GLTFLoader(manager);
 let hdriloader = new RGBELoader(manager);
@@ -76,6 +77,7 @@ function godswork() {
    
     renderer = new THREE.WebGLRenderer({antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
+    THREE.ColorManagement.enabled = true;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
@@ -84,7 +86,8 @@ function godswork() {
 
   
     scene.environment = envMap;
-    scene.background = envMap;
+    // scene.background = envMap;
+    scene.background = new THREE.Color(0x93CCC7);
 
 
     controls = new OrbitControls(camera, renderer.domElement);
@@ -94,10 +97,21 @@ function godswork() {
     document.body.appendChild(renderer.domElement);
 
     window.addEventListener('resize', onWindowResize);
+    
+//PP
+    const renderpass = new RenderPass(scene, camera);
+    const parameters = {minFilter: THREE.LinearFilter,magFilter: THREE.LinearFilter,format: THREE.RGBAFormat,type: THREE.FloatType};
+    const renderTarget = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, parameters );
+    composer = new EffectComposer(renderer, renderTarget);
+    composer.setSize(window.innerWidth, window.innerHeight);
+    composer.addPass(renderpass);
+    composer.addPass(new EffectPass(camera, new BrightnessContrastEffect({ brightness: -0.15, contrast: 0.3 })));
+    composer.addPass(new EffectPass(camera, new SMAAEffect()));
+    composer.addPass(new EffectPass(camera, new ChromaticAberrationEffect({offset: new THREE.Vector2(0.0002, 0.0002)})));
 
-    // Add lighting
-    // const ambientLight = new THREE.AmbientLight(0x404040);
-    // scene.add(ambientLight);
+
+
+
 
     const directionalLight = new THREE.DirectionalLight(0xffffff,0.8);
     directionalLight.position.set(1, 1, 0);
@@ -116,7 +130,8 @@ function godswork() {
 
 function animate() {
     requestAnimationFrame(animate);
-    renderer.render(scene, camera);
+    // renderer.render(scene, camera);
+    composer.render();
 }
 
 function onWindowResize() {
