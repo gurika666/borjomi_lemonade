@@ -19,6 +19,11 @@ let sceneloader = new GLTFLoader(manager);
 let hdriloader = new RGBELoader(manager);
 const clock = new THREE.Clock();
 
+//play animations
+let animating = false;
+let currentIndex = -1;
+let wrap;
+
 manager.onLoad = function (){
   godswork();
 };
@@ -47,7 +52,7 @@ function godswork() {
     camera.updateProjectionMatrix();
  
    
-    renderer = new THREE.WebGLRenderer({antialias: true });
+    renderer = new THREE.WebGLRenderer({antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     // THREE.ColorManagement.enabled = true;
     // renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -71,9 +76,13 @@ function godswork() {
     mixer = new THREE.AnimationMixer(mesh);
 
     for (let i = 0; i < animations.length; i++) {
-        const action = mixer.clipAction(animations[i]);
-        action.play();  
+        // const action = mixer.clipAction(animations[i]);
+        // action.setLoop( THREE.LoopOnce );
+        // action.clampWhenFinished = true;
+        // action.play();  
     }
+
+    addObserver();
 
     
 //PP
@@ -109,14 +118,42 @@ function godswork() {
     animate();
 }
 
-Observer.create({
-    type: "wheel,touch,pointer",
-    wheelSpeed: -1,
-    // onDown: () => !animating && changeCameraDown(currentIndex - 1, -1),
-    // onUp: () => !animating && changeCameraDown(currentIndex + 1, 1),
-    tolerance: 10,
-    preventDefault: true
-  });
+function addObserver(){
+    wrap = gsap.utils.wrap(0, animations.length);
+    gsap.registerPlugin(Observer);
+    
+    Observer.create({
+        type: "wheel,touch,pointer",
+        wheelSpeed: -1,
+        onDown: () => !animating && playAnimation(currentIndex - 1, -1),
+        onUp: () => !animating && playAnimation(currentIndex + 1, 1),
+        tolerance: 10,
+        preventDefault: true
+      });    
+}
+
+
+function playAnimation(index, direction){
+    
+    index = wrap(index);
+
+    if(currentIndex == animations.length - 1 && direction > 0 || !currentIndex && direction < 0 ) return false;
+
+    animating = true;
+        
+    let action = mixer.clipAction(animations[index]);
+    action.setLoop( THREE.LoopOnce );
+    action.clampWhenFinished = true;
+    action.play();  
+    // mixer.addEventListener( 'finished', ( e	)=>{
+    //     console.log('finished');
+    // });
+
+    setTimeout(() => {
+        animating = false;
+        currentIndex = index;
+    }, 2000);
+}
   
 
 function animate() {
