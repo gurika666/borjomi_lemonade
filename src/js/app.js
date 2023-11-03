@@ -5,11 +5,12 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import { EffectComposer, EffectPass, BrightnessContrastEffect, RenderPass, SMAAEffect, ChromaticAberrationEffect } from 'postprocessing';
 import { gsap } from 'gsap';
+import { Observer } from "gsap/Observer";
 import { DoubleSide, EquirectangularRefractionMapping } from 'three';
 import { AnimationUtils } from 'three';
 
-
 const canvas = document.querySelector('.canvas');
+gsap.registerPlugin(Observer);
 
 let scene, camera, renderer, controls, composer, mixer, animations;
 let mesh, envMap;
@@ -108,6 +109,16 @@ function godswork() {
     animate();
 }
 
+Observer.create({
+    type: "wheel,touch,pointer",
+    wheelSpeed: -1,
+    // onDown: () => !animating && changeCameraDown(currentIndex - 1, -1),
+    // onUp: () => !animating && changeCameraDown(currentIndex + 1, 1),
+    tolerance: 10,
+    preventDefault: true
+  });
+  
+
 function animate() {
     const deltaTime = clock.getDelta();
 
@@ -124,6 +135,4 @@ function onWindowResize() {
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
-
-
 
