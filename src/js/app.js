@@ -12,7 +12,9 @@ import { AnimationUtils } from 'three';
 const canvas = document.querySelector('.canvas');
 gsap.registerPlugin(Observer);
 
-let scene, camera, renderer, controls, composer, mixer, animations;
+let scene, camera, renderer, controls, composer, mixer;
+
+let loaderAnim, revealAnim, firstAnim;
 let mesh, envMap;
 let manager = new THREE.LoadingManager;
 let sceneloader = new GLTFLoader(manager);
@@ -20,8 +22,8 @@ let hdriloader = new RGBELoader(manager);
 const clock = new THREE.Clock();
 
 //play animations
-let animating = false;
-let currentIndex = -1;
+let animations = [];
+let currentIndex = 0;
 let wrap;
 
 manager.onLoad = function (){
@@ -40,8 +42,31 @@ sceneloader.load('mesh/Cans.glb', function(gltf){
     camera = gltf.cameras[0];
 
 
-    animations = gltf.animations;
+
+   
+
+
+    mixer = new THREE.AnimationMixer(mesh);
+
+  // Create an action for the entire animation
+//   const fullAnimation = mixer.clipAction(animations[0]);
+    let loader = THREE.AnimationUtils.subclip(gltf.animations[0], "fullanim", 0 , 150)
+    let scroll1 = THREE.AnimationUtils.subclip(gltf.animations[0], "fullanim", 150 , 237)
+    let scroll2 = THREE.AnimationUtils.subclip(gltf.animations[0], "fullanim", 237 , 327)
+    let scroll3 = THREE.AnimationUtils.subclip(gltf.animations[0], "fullanim", 327 , 421)
+    let scroll4 = THREE.AnimationUtils.subclip(gltf.animations[0], "fullanim", 421 , 515)
+    let scroll5 = THREE.AnimationUtils.subclip(gltf.animations[0], "fullanim", 515 , 571)
+
+
+    let clips = [loader, scroll1,scroll2,scroll3,scroll4,scroll5];
+
     
+    for(let i = 0; i < clips.length; i++){
+        animations[i] = mixer.clipAction(clips[i]).setLoop(THREE.LoopOnce);
+        animations[i].clampWhenFinished= true;
+    }
+
+    animations[0].play();
 
 });
 
@@ -73,14 +98,8 @@ function godswork() {
     // controls = new OrbitControls(camera, renderer.domElement);
     // controls.enabled = false;
 
-    mixer = new THREE.AnimationMixer(mesh);
+    
 
-    for (let i = 0; i < animations.length; i++) {
-        // const action = mixer.clipAction(animations[i]);
-        // action.setLoop( THREE.LoopOnce );
-        // action.clampWhenFinished = true;
-        // action.play();  
-    }
 
     addObserver();
 
@@ -125,8 +144,16 @@ function addObserver(){
     Observer.create({
         type: "wheel,touch,pointer",
         wheelSpeed: -1,
-        onDown: () => !animating && playAnimation(currentIndex - 1, -1),
-        onUp: () => !animating && playAnimation(currentIndex + 1, 1),
+        onDown: () => {
+            if(!animations[currentIndex].isRunning()){
+                playAnimation(currentIndex - 1, -1)
+            }
+        },
+        onUp: () => {
+            if(!animations[currentIndex].isRunning()){
+                 playAnimation(currentIndex + 1, 1)
+            }
+        },
         tolerance: 10,
         preventDefault: true
       });    
@@ -136,23 +163,13 @@ function addObserver(){
 function playAnimation(index, direction){
     
     index = wrap(index);
-
+    
     if(currentIndex == animations.length - 1 && direction > 0 || !currentIndex && direction < 0 ) return false;
+    
+    currentIndex = index;
+    console.log(currentIndex);
+    animations[index].play();
 
-    animating = true;
-        
-    let action = mixer.clipAction(animations[index]);
-    action.setLoop( THREE.LoopOnce );
-    action.clampWhenFinished = true;
-    action.play();  
-    // mixer.addEventListener( 'finished', ( e	)=>{
-    //     console.log('finished');
-    // });
-
-    setTimeout(() => {
-        animating = false;
-        currentIndex = index;
-    }, 2000);
 }
   
 
@@ -163,8 +180,7 @@ function animate() {
 
     requestAnimationFrame(animate);
     // renderer.render(scene, camera);
-    composer.render();
-
+    composer.render();    
 }
 
 function onWindowResize() {
