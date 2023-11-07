@@ -5,16 +5,15 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import { EffectComposer, EffectPass, BrightnessContrastEffect, RenderPass, SMAAEffect, ChromaticAberrationEffect } from 'postprocessing';
 import { gsap } from 'gsap';
-import { Observer } from "gsap/Observer";
-import { DoubleSide, EquirectangularRefractionMapping } from 'three';
-import { AnimationUtils } from 'three';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
 
 const canvas = document.querySelector('.canvas');
-gsap.registerPlugin(Observer);
 
-let scene, camera, renderer, controls, composer, mixer;
 
-let loaderAnim, revealAnim, firstAnim;
+let scene, camera, renderer, composer, mixer, firstaction, action;
+
+
 let mesh, envMap;
 let manager = new THREE.LoadingManager;
 let sceneloader = new GLTFLoader(manager);
@@ -23,8 +22,9 @@ const clock = new THREE.Clock();
 
 //play animations
 let animations = [];
-let currentIndex = 0;
-let wrap;
+;
+
+
 
 manager.onLoad = function (){
   godswork();
@@ -40,38 +40,31 @@ sceneloader.load('mesh/Cans.glb', function(gltf){
 
     mesh = gltf.scene;
     camera = gltf.cameras[0];
+    animations = gltf.animations;
+
+    mixer = new THREE.AnimationMixer(mesh);  
 
 
+    // let loader = THREE.AnimationUtils.subclip(gltf.animations[0], "loading", 100 , 150)
+    // let fullAnim = THREE.AnimationUtils.subclip(gltf.animations[0], "full", 150 , 600)
+
+    // firstaction = mixer.clipAction(loader);
+    // firstaction.setLoop(THREE.LoopOnce);
+    // firstaction.clampWhenFinished = true;
+
+    action = mixer.clipAction(animations[0]);
+    // action.clampWhenFinished = true;
+
+    action.play();
+   
 
    
 
-
-    mixer = new THREE.AnimationMixer(mesh);
-
-  // Create an action for the entire animation
-//   const fullAnimation = mixer.clipAction(animations[0]);
-    let loader = THREE.AnimationUtils.subclip(gltf.animations[0], "fullanim", 0 , 150)
-    let scroll1 = THREE.AnimationUtils.subclip(gltf.animations[0], "fullanim", 150 , 237)
-    let scroll2 = THREE.AnimationUtils.subclip(gltf.animations[0], "fullanim", 237 , 327)
-    let scroll3 = THREE.AnimationUtils.subclip(gltf.animations[0], "fullanim", 327 , 421)
-    let scroll4 = THREE.AnimationUtils.subclip(gltf.animations[0], "fullanim", 421 , 515)
-    let scroll5 = THREE.AnimationUtils.subclip(gltf.animations[0], "fullanim", 515 , 571)
-
-
-    let clips = [loader, scroll1,scroll2,scroll3,scroll4,scroll5];
-
-    
-    for(let i = 0; i < clips.length; i++){
-        animations[i] = mixer.clipAction(clips[i]).setLoop(THREE.LoopOnce);
-        animations[i].clampWhenFinished= true;
-    }
-
-    animations[0].play();
-
 });
 
-function godswork() {
 
+function godswork() {
+    
     scene = new THREE.Scene();
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
@@ -84,7 +77,7 @@ function godswork() {
     // renderer.toneMapping = THREE.ACESFilmicToneMapping;
     document.body.appendChild(renderer.domElement);
     window.addEventListener('resize', onWindowResize);
-
+    
 
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.VSMShadowMap;
@@ -95,13 +88,12 @@ function godswork() {
     // scene.background = new THREE.Color(0x93CCC7);
 
 
-    // controls = new OrbitControls(camera, renderer.domElement);
-    // controls.enabled = false;
+
 
     
+ 
 
-
-    addObserver();
+   
 
     
 //PP
@@ -115,73 +107,71 @@ function godswork() {
     composer.addPass(new EffectPass(camera, new SMAAEffect()));
     composer.addPass(new EffectPass(camera, new ChromaticAberrationEffect({offset: new THREE.Vector2(0.0002, 0.0002)})));
 
-
-
-
-
-    // const directionalLight = new THREE.DirectionalLight(0xffffff,0.2);
-    // directionalLight.position.set(1, 1, 0);
-    // directionalLight.castShadow = true;
-    // scene.add(directionalLight);
-
-    // directionalLight.shadow.mapSize.width = 1024; 
-    // directionalLight.shadow.mapSize.height = 1024;
-    // directionalLight.shadow.camera.near = 0.5; 
-    // directionalLight.shadow.camera.far = 50;
-    // directionalLight.shadow.radius = 100;
-    // directionalLight.shadow.blurSamples = 25;
-
-    // mesh.receiveShadow = true;
     scene.add(mesh);
 
+   
+   
+    createAnimation(mixer, action, animations[0]);
+   
     animate();
 }
 
-function addObserver(){
-    wrap = gsap.utils.wrap(0, animations.length);
-    gsap.registerPlugin(Observer);
-    
-    Observer.create({
-        type: "wheel,touch,pointer",
-        wheelSpeed: -1,
-        onDown: () => {
-            if(!animations[currentIndex].isRunning()){
-                playAnimation(currentIndex - 1, -1)
-            }
-        },
-        onUp: () => {
-            if(!animations[currentIndex].isRunning()){
-                 playAnimation(currentIndex + 1, 1)
-            }
-        },
-        tolerance: 10,
-        preventDefault: true
-      });    
-}
 
-
-function playAnimation(index, direction){
-    
-    index = wrap(index);
-    
-    if(currentIndex == animations.length - 1 && direction > 0 || !currentIndex && direction < 0 ) return false;
-    
-    currentIndex = index;
-    console.log(currentIndex);
-    animations[index].play();
-
-}
-  
+gsap.registerPlugin(ScrollTrigger);
 
 function animate() {
     const deltaTime = clock.getDelta();
-
-    mixer.update(deltaTime);
-
+    
+    if(mixer!= null)mixer.update(deltaTime);
+    
     requestAnimationFrame(animate);
     // renderer.render(scene, camera);
     composer.render();    
+  
+
 }
+
+
+function createAnimation(mixer, action, clip) {
+    
+    let proxy = {
+      get time() {
+        return mixer.time;
+      },
+      set time(value) {
+        action.paused = false;
+        mixer.setTime(value);
+        action.paused = true;
+      }
+    };
+
+    let scrollingTL = gsap.timeline({
+      scrollTrigger: {
+        trigger: renderer.domElement,
+        start: "top top",
+        end: "+=5000%",
+        pin: true,
+        scrub: true,
+        markers: true,
+        onUpdate: function () {
+         
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(window.innerWidth, window.innerHeight);
+          console.log(proxy.time)
+        }
+      }
+    });
+    scrollingTL.to(proxy, {
+        time: clip.duration,
+        // repeat: 3,
+      });
+
+      console.log("sx")
+    }
+
+    
+
 
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;

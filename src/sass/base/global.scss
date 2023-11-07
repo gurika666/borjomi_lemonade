@@ -3,6 +3,7 @@ body {
   width: 100%;
   height: 100%;
   line-height: 1;
+ 
 }
 ::selection {
   color: var(--color-casting-sea);
@@ -11,7 +12,9 @@ body {
 html {
   font-size: 16px;
   font-family: var(--font-family-Monarch);
-  overflow: hidden;
+  // overflow: hidden;
+  overflow: auto;
+ 
 }
 
 .loader{
