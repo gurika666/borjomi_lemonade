@@ -7,13 +7,9 @@ import { EffectComposer, EffectPass, BrightnessContrastEffect, RenderPass, SMAAE
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-
 const canvas = document.querySelector('.canvas');
 
-
-let scene, camera, renderer, composer, mixer, firstaction, action,canmat;
-
-
+let scene, camera, renderer, composer, mixer , action,canmat, animations;
 let mesh, envMap;
 let manager = new THREE.LoadingManager;
 let sceneloader = new GLTFLoader(manager);
@@ -21,11 +17,8 @@ let hdriloader = new RGBELoader(manager);
 const clock = new THREE.Clock();
 let textureLoader = new THREE.TextureLoader()
 
+gsap.registerPlugin(ScrollTrigger);
 
-//play animations
-let animations = [];
-let scrollanim = true;
-let stopped = false;
 
 import vertexShader from "../shaders/vertexshader.glsl";
 import fragmentShader from "../shaders/fragmentShader.glsl";
@@ -35,11 +28,11 @@ let texture2 = textureLoader.load("/images/Mandarin_Basecolor.jpg");
 manager.onLoad = function (){
   godswork();
 };
+
+
 hdriloader.load('images/hdri_05.hdr', function(hdri) {
   envMap = hdri;
   envMap.mapping = THREE.EquirectangularReflectionMapping
-
-  
 });
 
 sceneloader.load('mesh/Cans.glb', function(gltf){
@@ -58,91 +51,54 @@ sceneloader.load('mesh/Cans.glb', function(gltf){
             // child.material.texture = texture1
         }
     })
-     
-
             
-    mesh = gltf.scene;
-    camera = gltf.cameras[0];
-    animations = gltf.animations;
+  mesh = gltf.scene;
+  camera = gltf.cameras[0];
+  animations = gltf.animations;
 
-    mixer = new THREE.AnimationMixer(mesh);  
+  mixer = new THREE.AnimationMixer(mesh);  
 
+  action = mixer.clipAction(animations[0]);
+  action.timeScale = 0.6
 
-    // let loader = THREE.AnimationUtils.subclip(gltf.animations[0], "loading", 100 , 150)
-    // let fullAnim = THREE.AnimationUtils.subclip(gltf.animations[0], "full", 150 , 600)
-
-    // firstaction = mixer.clipAction(loader);
-    // firstaction.setLoop(THREE.LoopOnce);
-    // firstaction.clampWhenFinished = true;
-
-    // firstaction.play();
-
-    // action = mixer.clipAction(fullAnim);
-
-    action = mixer.clipAction(animations[0]);
-    action.timeScale = 0.6
-    // action.setLoop(THREE.LoopOnce);
-    // action.clampWhenFinished = true;
-
-    action.play();
-
-
-
-
-
-   
-
-   
+  action.play();
 
 });
 
 
 function godswork() {
-    
-    scene = new THREE.Scene();
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
- 
-   
-    renderer = new THREE.WebGLRenderer({antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    // THREE.ColorManagement.enabled = true;
-    // renderer.outputColorSpace = THREE.SRGBColorSpace;
-    // renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    document.body.appendChild(renderer.domElement);
-    window.addEventListener('resize', onWindowResize);
-   
-    
-
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.VSMShadowMap;
-
+  scene = new THREE.Scene();
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
   
-    scene.environment = envMap;
-    // scene.background = envMap;
-    // scene.background = new THREE.Color(0x93CCC7);
+  renderer = new THREE.WebGLRenderer({antialias: true, alpha: true, canvas });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+  window.addEventListener('resize', onWindowResize);
+      
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.VSMShadowMap;
+
+  scene.environment = envMap;
     
 //PP
-    const renderpass = new RenderPass(scene, camera);
-    const parameters = {minFilter: THREE.LinearFilter,magFilter: THREE.LinearFilter,format: THREE.RGBAFormat,type: THREE.FloatType};
-    const renderTarget = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, parameters );
-    composer = new EffectComposer(renderer, renderTarget);
-    composer.setSize(window.innerWidth, window.innerHeight);
-    composer.addPass(renderpass);
-    composer.addPass(new EffectPass(camera, new BrightnessContrastEffect({ brightness: -0.05, contrast: 0.01 })));
-    composer.addPass(new EffectPass(camera, new SMAAEffect()));
-    composer.addPass(new EffectPass(camera, new ChromaticAberrationEffect({offset: new THREE.Vector2(0.0002, 0.0002)})));
+  const renderpass = new RenderPass(scene, camera);
+  const parameters = {minFilter: THREE.LinearFilter,magFilter: THREE.LinearFilter,format: THREE.RGBAFormat,type: THREE.FloatType};
+  const renderTarget = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, parameters );
+  composer = new EffectComposer(renderer, renderTarget);
+  composer.setSize(window.innerWidth, window.innerHeight);
+  composer.addPass(renderpass);
+  composer.addPass(new EffectPass(camera, new BrightnessContrastEffect({ brightness: -0.05, contrast: 0.01 })));
+  composer.addPass(new EffectPass(camera, new SMAAEffect()));
+  composer.addPass(new EffectPass(camera, new ChromaticAberrationEffect({offset: new THREE.Vector2(0.0002, 0.0002)})));
 
-    scene.add(mesh);
+  scene.add(mesh);
 
-   
-   
-    createAnimation(mixer, action, animations[0]);
-   
-    animate();
+  createAnimation(mixer, action, animations[0]);
+  
+  animate();
 }
 
-gsap.registerPlugin(ScrollTrigger);
 
 function animate() {
     const deltaTime = clock.getDelta();
@@ -158,14 +114,10 @@ function animate() {
     // canmat.uniforms.blendValue.value += 0.1;
     // console.log(canmat.uniforms.blendValue.value)
 
-    
-
-
 }
 
 
 function createAnimation(mixer, action, clip) {
-    
     let proxy = {
       get time() {
         return mixer.time;
@@ -176,31 +128,35 @@ function createAnimation(mixer, action, clip) {
         action.paused = true;
       }
     };
-
+    
     let scrollingTL = gsap.timeline({
       scrollTrigger: {
-        trigger: renderer.domElement,
+        trigger: canvas,
         start: "top top",
         end: "+=5000%",
-        pin: true,
         scrub: true,
-        markers: true,
         onUpdate: function () {
-         
           camera.aspect = window.innerWidth / window.innerHeight;
           camera.updateProjectionMatrix();
           renderer.setSize(window.innerWidth, window.innerHeight);
-          console.log(proxy.time)
         }
       }
     });
-    scrollingTL.to(proxy, {
-        time: clip.duration,
-        // repeat: 3,
-      });
 
-      
-    }
+    gsap.to(proxy, {
+        time: 5,
+        duration: 5,
+        onUpdate: function () {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        },
+        onComplete:()=>{
+            document.body.classList.remove('no-scroll');
+            scrollingTL.fromTo(proxy, {time: 5},{time: clip.duration});
+        }
+    });
+}    
 
 
 function onWindowResize() {
