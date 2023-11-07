@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import {resolve} from "path";
+import glsl from 'vite-plugin-glsl';
 
 import { createHtmlPlugin } from 'vite-plugin-html'
 
@@ -8,6 +9,19 @@ export default defineConfig ({
     root: './',
     publicDir: 'public',
     plugins: [
+      glsl({
+        include: [                   
+          '**/*.glsl', '**/*.wgsl',
+          '**/*.vert', '**/*.frag',
+          '**/*.vs', '**/*.fs'
+        ],
+        exclude: undefined,          
+        warnDuplicatedImports: true, 
+        defaultExtension: 'glsl',    
+        compress: false,             
+        watch: true,                 
+        root: '/'                    
+      }),
         createHtmlPlugin({
           minify: true,
           /**
@@ -60,4 +74,5 @@ export default defineConfig ({
         outDir: 'dist',
         chunkSizeWarningLimit: 1600, 
     },
+    
 })

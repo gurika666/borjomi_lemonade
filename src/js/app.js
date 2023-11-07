@@ -11,7 +11,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 const canvas = document.querySelector('.canvas');
 
 
-let scene, camera, renderer, composer, mixer, firstaction, action;
+let scene, camera, renderer, composer, mixer, firstaction, action,canmat;
 
 
 let mesh, envMap;
@@ -19,12 +19,18 @@ let manager = new THREE.LoadingManager;
 let sceneloader = new GLTFLoader(manager);
 let hdriloader = new RGBELoader(manager);
 const clock = new THREE.Clock();
+let textureLoader = new THREE.TextureLoader()
+
 
 //play animations
 let animations = [];
-;
+let scrollanim = true;
+let stopped = false;
 
-
+import vertexShader from "../shaders/vertexshader.glsl";
+import fragmentShader from "../shaders/fragmentShader.glsl";
+let texture1 = textureLoader.load("/images/Tarkhun_Basecolor.jpg");
+let texture2 = textureLoader.load("/images/Mandarin_Basecolor.jpg");
 
 manager.onLoad = function (){
   godswork();
@@ -37,7 +43,24 @@ hdriloader.load('images/hdri_05.hdr', function(hdri) {
 });
 
 sceneloader.load('mesh/Cans.glb', function(gltf){
+    gltf.scene.traverse((child) => {
+        if(child.name == "Can"){
+            canmat = new THREE.ShaderMaterial({
+              uniforms:{
+                texture1: { value: texture1 },
+                texture2: { value: texture2 },
+                blendValue: { value: 0 }, // Initialize with a blend value
+              },
+              vertexShader: vertexShader,
+              fragmentShader:fragmentShader
+            })
+            child.material = canmat
+            // child.material.texture = texture1
+        }
+    })
+     
 
+            
     mesh = gltf.scene;
     camera = gltf.cameras[0];
     animations = gltf.animations;
@@ -52,10 +75,21 @@ sceneloader.load('mesh/Cans.glb', function(gltf){
     // firstaction.setLoop(THREE.LoopOnce);
     // firstaction.clampWhenFinished = true;
 
+    // firstaction.play();
+
+    // action = mixer.clipAction(fullAnim);
+
     action = mixer.clipAction(animations[0]);
+    action.timeScale = 0.6
+    // action.setLoop(THREE.LoopOnce);
     // action.clampWhenFinished = true;
 
     action.play();
+
+
+
+
+
    
 
    
@@ -77,6 +111,7 @@ function godswork() {
     // renderer.toneMapping = THREE.ACESFilmicToneMapping;
     document.body.appendChild(renderer.domElement);
     window.addEventListener('resize', onWindowResize);
+   
     
 
     renderer.shadowMap.enabled = true;
@@ -86,15 +121,6 @@ function godswork() {
     scene.environment = envMap;
     // scene.background = envMap;
     // scene.background = new THREE.Color(0x93CCC7);
-
-
-
-
-    
- 
-
-   
-
     
 //PP
     const renderpass = new RenderPass(scene, camera);
@@ -116,7 +142,6 @@ function godswork() {
     animate();
 }
 
-
 gsap.registerPlugin(ScrollTrigger);
 
 function animate() {
@@ -126,8 +151,15 @@ function animate() {
     
     requestAnimationFrame(animate);
     // renderer.render(scene, camera);
-    composer.render();    
-  
+    composer.render(); 
+    const elapsedTime = clock.getElapsedTime();
+
+    // canmat.uniforms.blendValue.value = (Math.sin(elapsedTime) + 1) / 2;
+    // canmat.uniforms.blendValue.value += 0.1;
+    // console.log(canmat.uniforms.blendValue.value)
+
+    
+
 
 }
 
@@ -167,10 +199,8 @@ function createAnimation(mixer, action, clip) {
         // repeat: 3,
       });
 
-      console.log("sx")
+      
     }
-
-    
 
 
 function onWindowResize() {
