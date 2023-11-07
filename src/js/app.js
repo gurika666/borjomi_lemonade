@@ -26,8 +26,10 @@ let texture1 = textureLoader.load("/images/Tarkhun_Basecolor.jpg");
 let texture2 = textureLoader.load("/images/Mandarin_Basecolor.jpg");
 
 manager.onLoad = function (){
+  window.scrollTo(0,0)
   godswork();
 };
+
 
 
 hdriloader.load('images/hdri_05.hdr', function(hdri) {
@@ -42,7 +44,7 @@ sceneloader.load('mesh/Cans.glb', function(gltf){
               uniforms:{
                 texture1: { value: texture1 },
                 texture2: { value: texture2 },
-                blendValue: { value: 0 }, // Initialize with a blend value
+                blendValue: { value: 0.1 }, // Initialize with a blend value
               },
               vertexShader: vertexShader,
               fragmentShader:fragmentShader
@@ -59,6 +61,8 @@ sceneloader.load('mesh/Cans.glb', function(gltf){
   mixer = new THREE.AnimationMixer(mesh);  
 
   action = mixer.clipAction(animations[0]);
+  action.setLoop(THREE.LoopOnce);
+  action.clampWhenFinished = true;
   action.timeScale = 0.6
 
   action.play();
@@ -97,6 +101,7 @@ function godswork() {
   createAnimation(mixer, action, animations[0]);
   
   animate();
+  changeShader();
 }
 
 
@@ -133,7 +138,7 @@ function createAnimation(mixer, action, clip) {
       scrollTrigger: {
         trigger: canvas,
         start: "top top",
-        end: "+=5000%",
+        endTrigger: ".container-end",
         scrub: true,
         onUpdate: function () {
           camera.aspect = window.innerWidth / window.innerHeight;
@@ -144,8 +149,8 @@ function createAnimation(mixer, action, clip) {
     });
 
     gsap.to(proxy, {
-        time: 5,
-        duration: 5,
+        time: 6,
+        duration: 6,
         onUpdate: function () {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
@@ -153,11 +158,31 @@ function createAnimation(mixer, action, clip) {
         },
         onComplete:()=>{
             document.body.classList.remove('no-scroll');
-            scrollingTL.fromTo(proxy, {time: 5},{time: clip.duration});
+            scrollingTL.fromTo(proxy, {time: 6},{time: 35});
         }
     });
 }    
 
+function changeShader(){
+  ScrollTrigger.create({
+    trigger: ".container2",
+    start: "top bottom",
+    end: "bottom bottom",
+    // markers: true,
+    onUpdate: (self) => {
+      // console.log(
+      //   "progress:",
+      //   self.progress.toFixed(3),
+      //   "direction:",
+      //   self.direction,
+      //   "velocity",
+      //   self.getVelocity()
+      // );
+      canmat.uniforms.blendValue.value = self.progress.toFixed(3),
+      console.log(canmat.uniforms.blendValue.value)
+    },
+  });
+}
 
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;

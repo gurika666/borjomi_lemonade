@@ -8,7 +8,7 @@
           vec4 tex1Color = texture2D(texture1, vUv);
           vec4 tex2Color = texture2D(texture2, vUv);
 
-          float blendFactor = smoothstep(0.0, 1.0, 1.);
+          float blendFactor = smoothstep(0.0, 1.0, blendValue);
 
           vec4 finalColor = mix(tex1Color, tex2Color, blendFactor);
 
