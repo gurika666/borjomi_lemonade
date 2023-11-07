@@ -7,11 +7,10 @@ import { EffectComposer, EffectPass, BrightnessContrastEffect, RenderPass, SMAAE
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-
 const canvas = document.querySelector('.canvas');
 
 
-let scene, camera, renderer, composer, mixer, firstaction, action;
+let scene, camera, renderer, composer, mixer, firstaction, action, scrollAnim;
 
 
 let mesh, envMap;
@@ -22,8 +21,7 @@ const clock = new THREE.Clock();
 
 //play animations
 let animations = [];
-;
-
+let scrollAnimation = false;
 
 
 manager.onLoad = function (){
@@ -32,8 +30,6 @@ manager.onLoad = function (){
 hdriloader.load('images/hdri_05.hdr', function(hdri) {
   envMap = hdri;
   envMap.mapping = THREE.EquirectangularReflectionMapping
-
-  
 });
 
 sceneloader.load('mesh/Cans.glb', function(gltf){
@@ -43,22 +39,12 @@ sceneloader.load('mesh/Cans.glb', function(gltf){
     animations = gltf.animations;
 
     mixer = new THREE.AnimationMixer(mesh);  
-
-
-    // let loader = THREE.AnimationUtils.subclip(gltf.animations[0], "loading", 100 , 150)
-    // let fullAnim = THREE.AnimationUtils.subclip(gltf.animations[0], "full", 150 , 600)
-
-    // firstaction = mixer.clipAction(loader);
-    // firstaction.setLoop(THREE.LoopOnce);
-    // firstaction.clampWhenFinished = true;
-
-    action = mixer.clipAction(animations[0]);
-    // action.clampWhenFinished = true;
-
+    
+    action = mixer.clipAction(animations[0]);    
+    action.setLoop(THREE.LoopOnce);
+    action.clampWhenFinished = true;
     action.play();
-   
 
-   
 
 });
 
@@ -70,11 +56,8 @@ function godswork() {
     camera.updateProjectionMatrix();
  
    
-    renderer = new THREE.WebGLRenderer({antialias: true, alpha: true });
+    renderer = new THREE.WebGLRenderer({antialias: true, alpha: true, canvas });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    // THREE.ColorManagement.enabled = true;
-    // renderer.outputColorSpace = THREE.SRGBColorSpace;
-    // renderer.toneMapping = THREE.ACESFilmicToneMapping;
     document.body.appendChild(renderer.domElement);
     window.addEventListener('resize', onWindowResize);
     
@@ -84,16 +67,6 @@ function godswork() {
 
   
     scene.environment = envMap;
-    // scene.background = envMap;
-    // scene.background = new THREE.Color(0x93CCC7);
-
-
-
-
-    
- 
-
-   
 
     
 //PP
@@ -109,8 +82,6 @@ function godswork() {
 
     scene.add(mesh);
 
-   
-   
     createAnimation(mixer, action, animations[0]);
    
     animate();
@@ -125,15 +96,12 @@ function animate() {
     if(mixer!= null)mixer.update(deltaTime);
     
     requestAnimationFrame(animate);
-    // renderer.render(scene, camera);
     composer.render();    
-  
 
 }
 
 
 function createAnimation(mixer, action, clip) {
-    
     let proxy = {
       get time() {
         return mixer.time;
@@ -144,17 +112,17 @@ function createAnimation(mixer, action, clip) {
         action.paused = true;
       }
     };
+    
 
     let scrollingTL = gsap.timeline({
       scrollTrigger: {
-        trigger: renderer.domElement,
+        trigger: canvas,
         start: "top top",
         end: "+=5000%",
-        pin: true,
+        // pin: true,
         scrub: true,
-        markers: true,
+        // markers: true,
         onUpdate: function () {
-         
           camera.aspect = window.innerWidth / window.innerHeight;
           camera.updateProjectionMatrix();
           renderer.setSize(window.innerWidth, window.innerHeight);
@@ -162,15 +130,33 @@ function createAnimation(mixer, action, clip) {
         }
       }
     });
-    scrollingTL.to(proxy, {
-        time: clip.duration,
-        // repeat: 3,
-      });
 
-      console.log("sx")
-    }
+    gsap.to(proxy, {
+        time: 5,
+        duration: 5,
+        onUpdate: function () {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            console.log(proxy.time)
+          },
+          onComplete:()=>{
+            document.body.classList.remove('no-scroll');
+            console.log('complete')
 
-    
+            scrollingTL.fromTo(proxy, {
+                time: 5,
+            },
+            {
+                time: clip.duration,
+            },
+            );
+          }
+    });
+
+
+
+}    
 
 
 function onWindowResize() {
