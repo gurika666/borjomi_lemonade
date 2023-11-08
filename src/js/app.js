@@ -23,29 +23,51 @@ gsap.registerPlugin(ScrollTrigger);
 import vertexShader from "../shaders/vertexshader.glsl";
 import fragmentShader from "../shaders/fragmentShader.glsl";
 let mandarinBase = textureLoader.load("/images/mandarin_basecolor.jpg");
-mandarinBase.flipY = false;
-mandarinBase.colorSpace = THREE.SRGBColorSpace;
-let mandarinMetal = textureLoader.load("/images/mandarin_metal.jpg");
-mandarinMetal.flipY = false;
-let tarkhunbase = textureLoader.load("/images/tarkhun_basecolor.jpg");
-tarkhunbase.flipY = false;
-tarkhunbase.colorSpace = THREE.SRGBColorSpace;
-let tarkhunmetal = textureLoader.load("/images/tarkhun_metal.jpg");
-tarkhunmetal.flipY = false;
-let pearbase = textureLoader.load("/images/pear_basecolor.jpg");
-pearbase.flipY = false;
-pearbase.colorSpace = THREE.SRGBColorSpace;
-let pearmetal = textureLoader.load("/images/pear_metal.jpg");
-pearmetal.flipY = false;
-let citrusbase = textureLoader.load("/images/citrus_basecolor.jpg");
-citrusbase.flipY = false;
-citrusbase.colorSpace = THREE.SRGBColorSpace;
-let citrusmetal = textureLoader.load("/images/citrus_metal.jpg");
-citrusmetal.flipY = false;
+
+let textures = {}
+
+const loadTextures = [
+  {
+    name: 'mandarinBase', url: '/images/mandarin_basecolor.jpg'
+  },
+  {
+    name: 'mandarinMetal', url: '/images/mandarin_metal.jpg', metal: true
+  },
+  {
+    name: 'tarkhunbase', url: '/images/tarkhun_basecolor.jpg',
+  },
+  {
+    name: 'tarkhunmetal', url: '/images/tarkhun_metal.jpg', metal: true
+  },
+  {
+    name: 'pearbase', url: '/images/pear_basecolor.jpg'
+  },
+  {
+    name: 'pearmetal', url: '/images/pear_metal.jpg', metal: true
+  },
+  {
+    name: 'citrusbase', url: '/images/citrus_basecolor.jpg'
+  },
+  {
+    name: 'citrusmetal', url: '/images/citrus_metal.jpg', metal: true
+  },
+]
+
+
+loadTextures.forEach((texture, i) =>{
+  textures[texture.name] = textureLoader.load(texture.url)
+
+  if(!texture.metal){
+    textures[texture.name].colorSpace = THREE.SRGBColorSpace;
+    textures[texture.name].flipY = false;
+  } else {
+    textures[texture.name].flipY = false;
+  }
+})
+
 
 
 manager.onLoad = function (){
-
   window.scrollTo(0,0)
   godswork();
 };
@@ -55,17 +77,15 @@ manager.onLoad = function (){
 hdriloader.load('images/hdri_05.hdr', function(hdri) {
   envMap = hdri;
   envMap.mapping = THREE.EquirectangularReflectionMapping
-  
-});
 
-sceneloader.load('mesh/Cans.glb', function(gltf){
+  sceneloader.load('mesh/Cans.glb', function(gltf){
     gltf.scene.traverse((child) => {
         if(child.name == "Can"){  
       
           canmat = new THREE.MeshPhysicalMaterial({
-            map: mandarinBase,
+            map: textures.mandarinBase,
             envMap: envMap,
-            roughnessMap: mandarinMetal,
+            roughnessMap: textures.mandarinMetal,
             metalness: .6,
           })
           child.material = canmat
@@ -74,9 +94,9 @@ sceneloader.load('mesh/Cans.glb', function(gltf){
         if(child.name == "Tarkhun"){  
       
           const material = new THREE.MeshPhysicalMaterial({
-            map: tarkhunbase,
+            map: textures.tarkhunbase,
             envMap: envMap,
-            roughnessMap: tarkhunmetal,
+            roughnessMap: textures.tarkhunmetal,
             metalness: .6,
           })
           child.material = material
@@ -85,9 +105,9 @@ sceneloader.load('mesh/Cans.glb', function(gltf){
         if(child.name == "Citrus"){  
       
           const material = new THREE.MeshPhysicalMaterial({
-            map: citrusbase,
+            map: textures.citrusbase,
             envMap: envMap,
-            roughnessMap: citrusmetal,
+            roughnessMap: textures.citrusmetal,
             metalness: .6,
           })
           child.material = material
@@ -96,9 +116,9 @@ sceneloader.load('mesh/Cans.glb', function(gltf){
         if(child.name == "Pear"){  
       
           const material = new THREE.MeshPhysicalMaterial({
-            map: pearbase,
+            map: textures.pearbase,
             envMap: envMap,
-            roughnessMap: pearmetal,
+            roughnessMap: textures.pearmetal,
             metalness: .6,
           })
           child.material = material
@@ -116,9 +136,8 @@ sceneloader.load('mesh/Cans.glb', function(gltf){
   action.setLoop(THREE.LoopOnce);
   action.clampWhenFinished = true;
   action.timeScale = 0.6
-
   action.play();
-
+  });
 });
 
 
@@ -208,7 +227,7 @@ function createAnimation(mixer, action, clip) {
 
     gsap.to(proxy, {
         time: 6,
-        duration: 6,
+        duration: 3,
         onUpdate: function () {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();

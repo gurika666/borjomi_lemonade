@@ -31,9 +31,16 @@ body{
   inset: 0;
 }
 
-
-$colors:(blue, black, red, blue, black, red,  blue, black,blue);
-
-@for $i from 2 through length($colors) {
-  .container:nth-child(#{$i}) {background-color:nth($colors, $i)};
+.parent{
+  background-image: url('/images/bg_gradient.avif');
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
 }
+
+
+// $colors:(blue, black, red, blue, black, red,  blue, black,blue);
+
+// @for $i from 2 through length($colors) {
+//   .container:nth-child(#{$i}) {background-color:nth($colors, $i)};
+// }
