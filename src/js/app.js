@@ -10,7 +10,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 const canvas = document.querySelector('.canvas');
 
 let scene, camera, renderer, composer, mixer , action,canmat, animations;
-let mesh, envMap;
+let mesh, envMap, can;
 let manager = new THREE.LoadingManager;
 let sceneloader = new GLTFLoader(manager);
 let hdriloader = new RGBELoader(manager);
@@ -22,10 +22,30 @@ gsap.registerPlugin(ScrollTrigger);
 
 import vertexShader from "../shaders/vertexshader.glsl";
 import fragmentShader from "../shaders/fragmentShader.glsl";
-let texture1 = textureLoader.load("/images/Tarkhun_Basecolor.jpg");
-let texture2 = textureLoader.load("/images/Mandarin_Basecolor.jpg");
+let mandarinBase = textureLoader.load("/images/mandarin_basecolor.jpg");
+mandarinBase.flipY = false;
+mandarinBase.colorSpace = THREE.SRGBColorSpace;
+let mandarinMetal = textureLoader.load("/images/mandarin_metal.jpg");
+mandarinMetal.flipY = false;
+let tarkhunbase = textureLoader.load("/images/tarkhun_basecolor.jpg");
+tarkhunbase.flipY = false;
+tarkhunbase.colorSpace = THREE.SRGBColorSpace;
+let tarkhunmetal = textureLoader.load("/images/tarkhun_metal.jpg");
+tarkhunmetal.flipY = false;
+let pearbase = textureLoader.load("/images/pear_basecolor.jpg");
+pearbase.flipY = false;
+pearbase.colorSpace = THREE.SRGBColorSpace;
+let pearmetal = textureLoader.load("/images/pear_metal.jpg");
+pearmetal.flipY = false;
+let citrusbase = textureLoader.load("/images/citrus_basecolor.jpg");
+citrusbase.flipY = false;
+citrusbase.colorSpace = THREE.SRGBColorSpace;
+let citrusmetal = textureLoader.load("/images/citrus_metal.jpg");
+citrusmetal.flipY = false;
+
 
 manager.onLoad = function (){
+
   window.scrollTo(0,0)
   godswork();
 };
@@ -35,22 +55,54 @@ manager.onLoad = function (){
 hdriloader.load('images/hdri_05.hdr', function(hdri) {
   envMap = hdri;
   envMap.mapping = THREE.EquirectangularReflectionMapping
+  
 });
 
 sceneloader.load('mesh/Cans.glb', function(gltf){
     gltf.scene.traverse((child) => {
-        if(child.name == "Can"){
-            canmat = new THREE.ShaderMaterial({
-              uniforms:{
-                texture1: { value: texture1 },
-                texture2: { value: texture2 },
-                blendValue: { value: 0.1 }, // Initialize with a blend value
-              },
-              vertexShader: vertexShader,
-              fragmentShader:fragmentShader
-            })
-            child.material = canmat
-            // child.material.texture = texture1
+        if(child.name == "Can"){  
+      
+          canmat = new THREE.MeshPhysicalMaterial({
+            map: mandarinBase,
+            envMap: envMap,
+            roughnessMap: mandarinMetal,
+            metalness: .6,
+          })
+          child.material = canmat
+          
+        }
+        if(child.name == "Tarkhun"){  
+      
+          const material = new THREE.MeshPhysicalMaterial({
+            map: tarkhunbase,
+            envMap: envMap,
+            roughnessMap: tarkhunmetal,
+            metalness: .6,
+          })
+          child.material = material
+          
+        }
+        if(child.name == "Citrus"){  
+      
+          const material = new THREE.MeshPhysicalMaterial({
+            map: citrusbase,
+            envMap: envMap,
+            roughnessMap: citrusmetal,
+            metalness: .6,
+          })
+          child.material = material
+          
+        }
+        if(child.name == "Pear"){  
+      
+          const material = new THREE.MeshPhysicalMaterial({
+            map: pearbase,
+            envMap: envMap,
+            roughnessMap: pearmetal,
+            metalness: .6,
+          })
+          child.material = material
+          
         }
     })
             
@@ -84,6 +136,10 @@ function godswork() {
   renderer.shadowMap.type = THREE.VSMShadowMap;
 
   scene.environment = envMap;
+  // scene.background = envMap;
+  
+
+  
     
 //PP
   const renderpass = new RenderPass(scene, camera);
@@ -96,6 +152,8 @@ function godswork() {
   composer.addPass(new EffectPass(camera, new SMAAEffect()));
   composer.addPass(new EffectPass(camera, new ChromaticAberrationEffect({offset: new THREE.Vector2(0.0002, 0.0002)})));
 
+  // const light = new THREE.AmbientLight(10)
+  // scene.add(light)
   scene.add(mesh);
 
   createAnimation(mixer, action, animations[0]);
@@ -178,8 +236,8 @@ function changeShader(){
       //   "velocity",
       //   self.getVelocity()
       // );
-      canmat.uniforms.blendValue.value = self.progress.toFixed(3),
-      console.log(canmat.uniforms.blendValue.value)
+      // canmat.uniforms.blendValue.value = self.progress.toFixed(3),
+      // console.log(canmat.uniforms.blendValue.value)
     },
   });
 }
