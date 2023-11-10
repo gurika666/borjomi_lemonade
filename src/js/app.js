@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
+import { Observer } from "gsap/Observer";
 import { EffectComposer, EffectPass, BrightnessContrastEffect, RenderPass,ChromaticAberrationEffect,FXAAEffect, BloomEffect, DepthOfFieldEffect, BlendFunction } from 'postprocessing';
 import {VelocityDepthNormalPass, HBAOEffect, SSGIEffect} from 'realism-effects'
 
@@ -217,7 +218,7 @@ function godswork() {
   createAnimation(mixer, action, animations[0]);
   
   animate();
-  changeShader();
+  // changeShader();
 }
 
 
@@ -282,6 +283,48 @@ function dampenAngularVelocity(object, dampingFactor) {
   }
 }
 
+const scrollOptions = [
+  {
+    current: 7.5,
+    next: 12.7,
+  },
+  {
+    prevous: 7.5,
+    current: 12.7,
+    next: 17.8,
+    texture: textures.mandarinBase
+  },
+  {
+    prevous: 12.7,
+    current: 17.8,
+    next: 22.5,
+    texture: textures.pearbase,
+  },
+  {
+    prevous: 17.8,
+    current: 22.5,
+    next: 27.4,
+    texture: textures.citrusbase,
+  },
+  {
+    prevous: 22.5,
+    current: 27.4,
+    next: 35,
+    texture: textures.tarkhunbase
+  },
+  {
+    prevous: 27.4,
+    current: 35,
+    // texture: 
+  },
+]
+
+
+let animating = true;
+let currentIndex = 0;
+let wrap = gsap.utils.wrap(0, scrollOptions.length);
+
+
 function createAnimation(mixer, action, clip) {
     let proxy = {
       get time() {
@@ -293,81 +336,109 @@ function createAnimation(mixer, action, clip) {
         action.paused = true;
       }
     };
-    
-    let scrollingTL = gsap.timeline({
-      scrollTrigger: {
-        trigger: canvas,
-        start: "top top",
-        endTrigger: ".container-end",
-        scrub: true,
-        onUpdate: function (self) {
-          camera.aspect = window.innerWidth / window.innerHeight;
-          camera.updateProjectionMatrix();
-          renderer.setSize(window.innerWidth, window.innerHeight);
-         
-        
-        }
-       
-      }
-    });
+  
 
     gsap.to(proxy, {
-        time: 6,
-        duration: 3,
-        onUpdate: function () {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        },
-        onComplete:()=>{
-            document.body.classList.remove('no-scroll');
-            scrollingTL.fromTo(proxy, {time: 6},{time: 35});
-        }
+      time: 7.5,
+      duration: 3,
+      onUpdate: ()=>{
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      },
+      onComplete:()=>{
+        animating = false;
+        Observer.create({
+          type: "wheel,touch,pointer",
+          wheelSpeed: -1,
+          onDown: () => !animating && changeCanPosition(currentIndex - 1, -1, proxy),
+          onUp: () => !animating && changeCanPosition(currentIndex + 1, 1, proxy),
+          tolerance: 10,
+          preventDefault: true
+        });
+      },
     });
 }    
 
-function changeShader(){
-  ScrollTrigger.create({
-    trigger: ".container2",
-    start: "center+=7% bottom",
-    end: "bottom+=20% bottom",
-    markers: true,
-    onLeaveBack:() =>{
-      canmat.map = textures.mandarinBase
-      // console.log("onelaveback")
-    },
-    onEnter: (self) => {
-      canmat.map = textures.pearbase
-     
-      // console.log("enter")
-    },
-    onLeave:() => {
-      // console.log("onelave")
-      canmat.map = textures.citrusbase
 
+function changeCanPosition(index, direction, proxy){
+
+  if(direction > 0 && scrollOptions[currentIndex].next ||  direction < 0 && scrollOptions[currentIndex].prevous){
+    index = wrap(index);
+    animating = true;
+
+    gsap.fromTo(proxy, {
+      time: scrollOptions[currentIndex].current,
+      duration: 3.5,
+      ease: "power3.inOut",
     },
- 
-    onEnterBack:()=>{
-      canmat.map = textures.pearbase
-      // console.log("enterback")
+    {
+      time: direction > 0 ? scrollOptions[currentIndex].next : scrollOptions[currentIndex].prevous,
+      duration: 3.5,
+      ease: "power3.inOut",
+      onUpdate: ()=>{
+        // console.log(proxy.time)
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      },
+      onStart: ()=>{
+        setTimeout(() => {
+          if(scrollOptions[currentIndex + direction].texture) canmat.map = scrollOptions[currentIndex + direction].texture
+        }, 1050);
+      },
+      onComplete:()=>{
+        currentIndex = index;
+        animating = false;
+        console.log(index, currentIndex)
     }
-  });
-  ScrollTrigger.create({
-    trigger: ".container3",
-    start: "bottom bottom",
-    // end: "bottom+=35% bottom",
-    markers: true,
-    onLeaveBack:() =>{
-      canmat.map = textures.citrusbase
-      // console.log("onelaveback")
-    },
-    onEnter: (self) => {
-      canmat.map = textures.tarkhunbase
-      // console.log("enter")
-    },
-    
-  });
+    });
+  }
 }
+
+
+// function changeShader(){
+//   ScrollTrigger.create({
+//     trigger: ".container2",
+//     start: "center+=7% bottom",
+//     end: "bottom+=20% bottom",
+//     markers: true,
+//     onLeaveBack:() =>{
+//       canmat.map = textures.mandarinBase
+//       // console.log("onelaveback")
+//     },
+//     onEnter: (self) => {
+//       canmat.map = textures.pearbase
+     
+//       // console.log("enter")
+//     },
+//     onLeave:() => {
+//       // console.log("onelave")
+//       canmat.map = textures.citrusbase
+
+//     },
+ 
+//     onEnterBack:()=>{
+//       canmat.map = textures.pearbase
+//       // console.log("enterback")
+//     }
+//   });
+//   ScrollTrigger.create({
+//     trigger: ".container3",
+//     start: "bottom bottom",
+//     // end: "bottom+=35% bottom",
+//     markers: true,
+//     onLeaveBack:() =>{
+//       canmat.map = textures.citrusbase
+//       // console.log("onelaveback")
+//     },
+//     onEnter: (self) => {
+//       canmat.map = textures.tarkhunbase
+//       // console.log("enter")
+//     },
+    
+//   });
+// }
 
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
