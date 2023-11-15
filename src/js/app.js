@@ -6,6 +6,11 @@ import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import { Observer } from "gsap/Observer";
 import { EffectComposer, EffectPass, BrightnessContrastEffect, RenderPass,ChromaticAberrationEffect,FXAAEffect, BloomEffect, DepthOfFieldEffect, BlendFunction } from 'postprocessing';
 import {VelocityDepthNormalPass, HBAOEffect, SSGIEffect} from 'realism-effects'
+import Stats from 'stats.js'
+
+let stats = new Stats()
+stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
+document.body.appendChild(stats.dom)
 
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -76,8 +81,10 @@ loadTextures.forEach((texture, i) =>{
 
 
 manager.onLoad = function (){
-  window.scrollTo(0,0)
-  godswork();
+
+    window.scrollTo(0,0)
+    godswork();
+ 
 };
 
 
@@ -144,12 +151,13 @@ hdriloader.load('images/hdri_05.hdr', function(hdri) {
   animations = gltf.animations;
 
   mixer = new THREE.AnimationMixer(mesh); 
- console.log(animations[0].duration)
+
+//  console.log(animations[0].duration)
 
   action = mixer.clipAction(animations[0]);
   action.setLoop(THREE.LoopOnce);
   action.clampWhenFinished = true;
-  action.timeScale = 0.5 
+  action.timeScale = 1 
   action.play();
 
   
@@ -226,6 +234,9 @@ function godswork() {
 
 
 function animate() {
+
+  // stats.begin()
+
     const deltaTime = clock.getDelta();
     
     if(mixer!= null)mixer.update(deltaTime);
@@ -234,24 +245,26 @@ function animate() {
     // renderer.render(scene, camera);
     composer.render(); 
     // const elapsedTime = clock.getElapsedTime();
-
-    fruits.forEach((fruit, index)=>{
-      fruit.rotation.z += 0.01
-     })
-
-     fruits.forEach((fruit) => {
-      // if (fruit.userData.velocity) {
-      //   fruit.position.add(fruit.userData.velocity);
-      // }
-      if (fruit.userData.angularVelocity) {
-        fruit.rotation.x += fruit.userData.angularVelocity.x;
-        fruit.rotation.y += fruit.userData.angularVelocity.y;
-        fruit.rotation.z += fruit.userData.angularVelocity.z;
-        dampenAngularVelocity(fruit, 0.98); // Adjust the damping factor as needed
-      }
     
+    fruits.forEach((fruit, index)=>{
+      fruit.rotation.y += 0.01
     })
-  
+    
+    fruits.forEach((fruit) => {
+      // if (fruit.userData.velocity) {
+        //   fruit.position.add(fruit.userData.velocity);
+        // }
+        if (fruit.userData.angularVelocity) {
+          fruit.rotation.x += fruit.userData.angularVelocity.x;
+          fruit.rotation.y += fruit.userData.angularVelocity.y;
+          fruit.rotation.z += fruit.userData.angularVelocity.z;
+          dampenAngularVelocity(fruit, 0.98); // Adjust the damping factor as needed
+        }
+        
+        
+      })
+      
+      stats.end()
     
 
 }
@@ -269,7 +282,7 @@ function onMouseMove(event) {
 
   if (intersects.length > 0) {
     // Mouse is over the cube, trigger the impulse
-    const impulseForce = { x: 0.1, y: 0.0, z: 0.1}; // Adjust the force as needed
+    const impulseForce = { x: 0.1, y: 0.1, z: 0.0}; // Adjust the force as needed
     intersects.forEach((intersect) => {
       applyImpulse(intersect.object, impulseForce);
     });
@@ -288,36 +301,36 @@ function dampenAngularVelocity(object, dampingFactor) {
 
 const scrollOptions = [
   {
-    current: 8.2,
-    next: 10,
+    current: 2,
+    next: 4,
   },
   {
-    prevous: 8.2,
-    current: 10,
-    next: 11.75,
+    prevous:2,
+    current: 4,
+    next: 6,
     texture: textures.mandarinBase
   },
   {
-    prevous: 10,
-    current: 11.75,
-    next: 13.5,
+    prevous: 4,
+    current: 6,
+    next: 8,
     texture: textures.pearbase,
   },
   {
-    prevous: 11.75,
-    current: 13.5,
-    next: 15.2,
+    prevous: 6,
+    current: 8,
+    next: 10,
     texture: textures.citrusbase,
   },
   {
-    prevous: 13.5,
-    current: 15.2,
-    next: 18.2,
+    prevous: 8,
+    current: 10,
+    next: 12,
     texture: textures.tarkhunbase
   },
   {
-    prevous: 16.2,
-    current: 18.2,
+    prevous: 10,
+    current: 12,
     // texture: 
   },
 ]
@@ -342,12 +355,14 @@ function createAnimation(mixer, action, clip) {
   
 
     gsap.to(proxy, {
-      time: 8.2,
-      duration: 3,
+      time: 2,
+      duration: 2,
+      ease: "sine.out",
       onUpdate: ()=>{
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
+        
       },
       onComplete:()=>{
         animating = false;
@@ -372,13 +387,12 @@ function changeCanPosition(index, direction, proxy){
 
     gsap.fromTo(proxy, {
       time: scrollOptions[currentIndex].current,
-      duration: 3.5,
-      ease: "power3.inOut",
+     
     },
     {
       time: direction > 0 ? scrollOptions[currentIndex].next : scrollOptions[currentIndex].prevous,
-      duration: 3.5,
-      ease: "power3.inOut",
+      duration: 1.6,
+      ease: "power2.out",
       onUpdate: ()=>{
         // console.log(proxy.time)
         camera.aspect = window.innerWidth / window.innerHeight;
@@ -398,50 +412,6 @@ function changeCanPosition(index, direction, proxy){
     });
   }
 }
-
-
-// function changeShader(){
-//   ScrollTrigger.create({
-//     trigger: ".container2",
-//     start: "center+=7% bottom",
-//     end: "bottom+=20% bottom",
-//     markers: true,
-//     onLeaveBack:() =>{
-//       canmat.map = textures.mandarinBase
-//       // console.log("onelaveback")
-//     },
-//     onEnter: (self) => {
-//       canmat.map = textures.pearbase
-     
-//       // console.log("enter")
-//     },
-//     onLeave:() => {
-//       // console.log("onelave")
-//       canmat.map = textures.citrusbase
-
-//     },
- 
-//     onEnterBack:()=>{
-//       canmat.map = textures.pearbase
-//       // console.log("enterback")
-//     }
-//   });
-//   ScrollTrigger.create({
-//     trigger: ".container3",
-//     start: "bottom bottom",
-//     // end: "bottom+=35% bottom",
-//     markers: true,
-//     onLeaveBack:() =>{
-//       canmat.map = textures.citrusbase
-//       // console.log("onelaveback")
-//     },
-//     onEnter: (self) => {
-//       canmat.map = textures.tarkhunbase
-//       // console.log("enter")
-//     },
-    
-//   });
-// }
 
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
