@@ -143,13 +143,16 @@ hdriloader.load('images/hdri_05.hdr', function(hdri) {
   camera = gltf.cameras[0];
   animations = gltf.animations;
 
-  mixer = new THREE.AnimationMixer(mesh);  
+  mixer = new THREE.AnimationMixer(mesh); 
+ console.log(animations[0].duration)
 
   action = mixer.clipAction(animations[0]);
   action.setLoop(THREE.LoopOnce);
   action.clampWhenFinished = true;
-  action.timeScale = 0.6
+  action.timeScale = 0.5 
   action.play();
+
+  
   });
 });
 
@@ -168,7 +171,7 @@ function godswork() {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.VSMShadowMap;
 
-  scene.fog = new THREE.Fog(0x3d0000, 2, 4.1);
+  // scene.fog = new THREE.Fog(0x3d0000, 2, 4.1);
 
   scene.environment = envMap;
   scene.background = new THREE.Color(0xffd000)
@@ -248,7 +251,7 @@ function animate() {
       }
     
     })
-
+  
     
 
 }
@@ -266,7 +269,7 @@ function onMouseMove(event) {
 
   if (intersects.length > 0) {
     // Mouse is over the cube, trigger the impulse
-    const impulseForce = { x: 0.1, y: 0.1, z: 0.1}; // Adjust the force as needed
+    const impulseForce = { x: 0.1, y: 0.0, z: 0.1}; // Adjust the force as needed
     intersects.forEach((intersect) => {
       applyImpulse(intersect.object, impulseForce);
     });
@@ -285,36 +288,36 @@ function dampenAngularVelocity(object, dampingFactor) {
 
 const scrollOptions = [
   {
-    current: 7.5,
-    next: 12.7,
+    current: 8.2,
+    next: 10,
   },
   {
-    prevous: 7.5,
-    current: 12.7,
-    next: 17.8,
+    prevous: 8.2,
+    current: 10,
+    next: 11.75,
     texture: textures.mandarinBase
   },
   {
-    prevous: 12.7,
-    current: 17.8,
-    next: 22.5,
+    prevous: 10,
+    current: 11.75,
+    next: 13.5,
     texture: textures.pearbase,
   },
   {
-    prevous: 17.8,
-    current: 22.5,
-    next: 27.4,
+    prevous: 11.75,
+    current: 13.5,
+    next: 15.2,
     texture: textures.citrusbase,
   },
   {
-    prevous: 22.5,
-    current: 27.4,
-    next: 35,
+    prevous: 13.5,
+    current: 15.2,
+    next: 18.2,
     texture: textures.tarkhunbase
   },
   {
-    prevous: 27.4,
-    current: 35,
+    prevous: 16.2,
+    current: 18.2,
     // texture: 
   },
 ]
@@ -339,7 +342,7 @@ function createAnimation(mixer, action, clip) {
   
 
     gsap.to(proxy, {
-      time: 7.5,
+      time: 8.2,
       duration: 3,
       onUpdate: ()=>{
         camera.aspect = window.innerWidth / window.innerHeight;
