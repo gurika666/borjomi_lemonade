@@ -6,11 +6,6 @@ import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import { Observer } from "gsap/Observer";
 import { EffectComposer, EffectPass, BrightnessContrastEffect, RenderPass,ChromaticAberrationEffect,FXAAEffect, BloomEffect, DepthOfFieldEffect, BlendFunction } from 'postprocessing';
 import {VelocityDepthNormalPass, HBAOEffect, SSGIEffect} from 'realism-effects'
-import Stats from 'stats.js'
-
-let stats = new Stats()
-stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
-document.body.appendChild(stats.dom)
 
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -143,7 +138,6 @@ hdriloader.load('images/hdri_05.hdr', function(hdri) {
         }else if (!child.name.includes("_metal") ){
           fruits.push(child);
         }}
-        // console.log(fruits)
     })
             
   mesh = gltf.scene;
@@ -152,7 +146,6 @@ hdriloader.load('images/hdri_05.hdr', function(hdri) {
 
   mixer = new THREE.AnimationMixer(mesh); 
 
-//  console.log(animations[0].duration)
 
   action = mixer.clipAction(animations[0]);
   action.setLoop(THREE.LoopOnce);
@@ -205,7 +198,6 @@ function godswork() {
   
   dof = new DepthOfFieldEffect(camera, { resolutionScale: 1, worldFocusDistance: 2.5, worldFocusRange: 0.7, bokehScale: 3});
   // composer.addPass(new EffectPass(camera, dof))
-  // console.log(dof.bokehScale)
   
   composer.addPass(new EffectPass(camera, new BloomEffect({intensity: 0.1,  radius: 0.6})));
 
@@ -235,7 +227,6 @@ function godswork() {
 
 function animate() {
 
-  // stats.begin()
 
     const deltaTime = clock.getDelta();
     
@@ -264,7 +255,6 @@ function animate() {
         
       })
       
-      stats.end()
     
 
 }
@@ -394,7 +384,6 @@ function changeCanPosition(index, direction, proxy){
       duration: 1.6,
       ease: "power2.out",
       onUpdate: ()=>{
-        // console.log(proxy.time)
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -407,7 +396,6 @@ function changeCanPosition(index, direction, proxy){
       onComplete:()=>{
         currentIndex = index;
         animating = false;
-        console.log(index, currentIndex)
     }
     });
   }
